@@ -1,0 +1,60 @@
+#!/usr/bin/env ruby
+
+class GitCommitSize
+  attr_reader :list
+
+  def initialize args=nil
+    @commits = `git rev-list --all #{args}`.split
+    @list    = {}
+  end
+
+  def blobs_in_commit treeish
+   `git diff-tree -r -c -M -C --no-commit-id #{treeish}`.
+     split("\n").
+     map { |blob| blob.split[3] }
+  end
+
+  def size_in_bytes obj
+    return 0 if obj =~ /\A0+\z/
+    `git cat-file -s #{obj}`.to_i
+  end
+
+  def bytes_in_commit treeish
+    blobs = blobs_in_commit treeish
+    total = blobs.map { |blob| size_in_bytes blob }.reduce(:+)
+  end
+
+  def walk
+    @commits.map { |c| @list[c] = bytes_in_commit c }
+  end
+
+  def sorted
+    @list.reject { |k, v| v.nil? }.sort_by { |k,v| v }
+  end
+
+  def avg
+    (@list.values.compact.reduce(:+).to_f / @commits.count).round
+  end
+
+  def median
+    list = @list.values.map(&:to_i).sort
+    n = list.count
+    case @list.count.odd?
+    when true
+      @list[(n+1)/2]
+    when false
+      ( list[n/2-1] + list[n/2] ) / 2.0
+    end
+  end
+end
+
+if __FILE__ == $0
+  git = GitCommitSize.new
+  count = git.commits.count
+  puts "Walking #{count} commits."
+  git.walk
+  result = git.sorted
+  numsep = /(?<=\d)(?=(?:\d{3})+(\.\d+)?\z)/
+  pp result
+  puts "Average: %s bytes" % git.avg.to_s.gsub(numsep, ?,)
+end

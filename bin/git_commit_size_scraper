@@ -1,0 +1,29 @@
+#!/usr/bin/env ruby
+
+require_relative File.join '..', 'lib', 'git_commit_size_scraper'
+
+include GitCommitSizeScraper
+include StatisticalArray
+
+def numsep num
+  p = /(?<=\d)(?=(?:\d{3})+(\.\d+)?\z)/
+  num.round(2).to_s.gsub p, ?,
+end
+
+def report values
+  values = StatsArray.new values
+
+  puts
+  puts "Average: %s bytes" % numsep(values.median)
+  puts "Median : %s bytes" % numsep(values.avg)
+  puts "Std Dev: %s bytes" % numsep(values.std_dev.round(2))
+  puts "Total  : %s bytes" % numsep(values.sum)
+end
+
+git = Scraper.new ARGV
+count = git.commits.count
+
+puts "Walking #{count} commits ..."
+git.walk
+pp git.list
+report git.list.values.map(&:to_i)
