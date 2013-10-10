@@ -1,4 +1,4 @@
-# Git Commit Size Scraper
+# Git Commit-Size Scraper
 
 ## Copyright and Licensing
 
