@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    git_commit_size_scraper (1.0.1)
+    git_commit_size_scraper (1.0.2)
       statistical_array (~> 1.0)
 
 GEM
